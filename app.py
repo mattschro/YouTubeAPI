@@ -7,52 +7,53 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
 import requests
+# will also need to import the hypothesis testing library
+
+# reading in df
+
+infile = Path(__file__).parent / "video_statistics.csv"
+df = pd.read_csv(infile)
+
+# maybe export to xlsx
+#df = pd.read_csv('video_statistics.csv')
+
+# import xlsx file video_statistics.xlsx
+#my_df = pd.read_excel('video_statistics.xlsx')
 
 
-# Part 1: ui ----
-#img_output = output_image("monthlymax.png", width="100%")
+from shiny import App, render, ui
 
 app_ui = ui.page_fluid(
-    # Model prediction
-    ui.h2("Variable Input to Model Prediction"),
-    ui.input_numeric("prcp", "Precipitation", value=0,min = 0, max = 10, step = .1),
-    ui.input_numeric("snow", "Snow", value=0,min = 0, max = 10, step = .1),
-    ui.input_numeric("tmin", "Minimum Temperature", value=40,min = 0, max = 75),
-    ui.input_numeric("month", "Month", value=1,min = 1, max = 12),
-    ui.input_numeric("threeday", "Three Day Rolling Average", value=0,min = 0, max = 90, step = .01),
-    ui.input_numeric("sevenday", "Seven Day Rolling Average", value=0,min = 0, max = 90, step = .01),
-    ui.output_text_verbatim("txt"),
 
-    # Exploratory Data Analysis
-    ui.h2("Exploratory Data Analysis"),
-    ui.h4("Chart #1: Kalshi Categories"),
-    ui.output_plot("category"),
-    ui.h4("Chart #2: Number of Submarkets by Day"),
-    ui.output_plot("submarket"),
-    ui.h4("Chart #3: Monthly Max Temperature"),
-    ui.img(src = "monthlymax.png", width="50%", height = "50%"),
-    ui.h4("Chart #4: Pairplot"),
-    ui.img(src = "pairplot.png", width="40%", height = "40%"),
-    ui.h4("Chart #5: Kalshi Market Weather Category Distribution"),
-    ui.output_plot("weather_mkts"),
 
-     # Hist of Chicago high temperature market
-    ui.h2("Kalshi's Chicago High Temperature Market"),
-    ui.p("Choose a date to see Kalshi's Chicago high temperature market. You cannot chose a date that is more than two days into the future."),
-    ui.p("Please consider this interactive visualization are our sixth and final exploratory data analysis chart."),
-    ui.panel_sidebar(
-    ui.input_date("targetdate", "Choose a date")      
-    ),
+    ui.h2("Visualizing One Variable"),
+    ui.input_selectize("hist", "Select a variable:", ["Views", "Likes", "Comments"]),
+    ui.output_plot("marketplot"),
 
-    ui.panel_main(
-        ui.output_text("w"),
-        ui.output_plot("marketplot")
-    ),
+
+    ui.h2("Visualizing the Relationship Between Two Variables"),
+    ui.input_selectize("var1", "Select a variable:", ["Title", "Days Since Published","Views", "Likes", "Comments","Duration", "Comment to View Ratio", "Like to View Ratio"]),
+    ui.input_selectize("var2", "Select a second variable:", ["Title", "Days Since Published","Views", "Likes", "Comments","Duration", "Comment to View Ratio", "Like to View Ratio"]),
+
+
+    ui.h2("Comparing Comment to View and Like to View Ratios"),
+    ui.input_selectize("video1", "Select a video:", df['Title']),
+    ui.input_selectize("video2", "Select a second video:", df['Title']),
 
 )
 
 
+def server(input, output, session):
+    @output
+    @render.plot()
+    def marketplot():
+        x = input.hist()
+        # hist with 30 bins
+        fig = plt.hist(df[x], bins=30)
+        plt.title(f"Chicago High Temperature Prediction Markets for {input.targetdate()}")
+        plt.xlabel("Predition Markets")
+        plt.ylabel("Yes ask");
+        return fig 
 
 
-
-app = App(app_ui, server, static_assets=www_dir, debug = True)
+app = App(app_ui, server, debug = True)
