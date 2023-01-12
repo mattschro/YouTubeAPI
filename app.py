@@ -46,15 +46,22 @@ app_ui = ui.page_fluid(
     ui.input_selectize("video2", "Select a second video:", df['Title and Day Published'].iloc[::-1]),
     ui.output_table("data_table"),
 
+    ui.h2("Hypothesis Testing: Comparing Comment to View and Like to View Ratios"),
+    ui.h5("Notes:"),
+    ui.p("The null hypothesis is that there is no difference between the like to view (or comment to view) ratio of the two videos. The alternative hypothesis is that there is a difference between the like (or comment) to view ratio of the two videos."),
+    ui.p("The p-value is the probability of observing a difference between the like to view (or comment to view) ratio of the two videos if the null hypothesis is true. If the p-value is less than .01, then we reject the null hypothesis and conclude that there is a difference between the like (or comment) to view ratio of the two videos."),
+    ui.p("The comment to view ratio is the number of comments divided by the number of views. The like to view ratio is the number of likes divided by the number of views."),
+    ui.p(""),
+    ui.h5("Results:"),
+    ui.p(""),
+    ui.p("Like to View Ratio:"),
+    ui.p(""),
     ui.output_text("t_test_views"),
+    ui.p(""),
+    ui.p("Comment to View Ratio:"),
     ui.p(""),
     ui.output_text("t_test_comments"),
     ui.p(""),
-
-
-   
-    ui.p("The comment to view ratio is the number of comments divided by the number of views. The like to view ratio is the number of likes divided by the number of views."),
-
 
 )
 
