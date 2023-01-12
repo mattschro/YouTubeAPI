@@ -8,7 +8,6 @@ import seaborn as sns
 import datetime
 import requests
 from scipy import stats
-# will also need to import the hypothesis testing library (scipy.stats.ttest_ind)
 
 # reading in df
 infile = Path(__file__).parent / "video_statistics.csv"
@@ -17,13 +16,12 @@ df = pd.read_csv(infile)
 
 from shiny import App, render, ui
 
-
 # graph inputs
 graph_inputs = ["Views", "Views per Day","Likes", "Like to View Ratio","Comments","Comment to View Ratio", "Duration in Minutes", "Days Since Published"]
  
 app_ui = ui.page_fluid(
 
-
+    ui.h1("MrBeast Gaming Statistics"),
     ui.h2("Visualizing One Variable"),
     ui.input_selectize("hist", "Select a variable:", graph_inputs),
     ui.output_plot("histogram"),
