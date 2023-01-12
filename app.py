@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
 import requests
+from scipy import stats
 # will also need to import the hypothesis testing library (scipy.stats.ttest_ind)
 
 # reading in df
@@ -16,16 +17,6 @@ df = pd.read_csv(infile)
 
 from shiny import App, render, ui
 
-def extract_data(df, video1, video2):
-    # Extract the rows for video1 and video2
-    video1_data = df[(df['Title and Day Published'] == video1)]
-    video2_data = df[(df['Title and Day Published'] == video2)]
-    # Extract the specified columns
-    #video1_data = video1_data[['Days Since Published', 'Views', 'Views per Day', 'Likes', 'Like to View Ratio', 'Comments', 'Comment to View Ratio', 'Duration in Minutes']]
-    #video2_data = video2_data[['Days Since Published', 'Views', 'Views per Day', 'Likes', 'Like to View Ratio', 'Comments', 'Comment to View Ratio', 'Duration in Minutes']]
-    # Create a new column 'Difference' which is the difference between the values of the extracted columns
-   #video1_data['Difference'] = video1_data.sub(video2_data)
-    return video1_data
 
 # graph inputs
 graph_inputs = ["Views", "Views per Day","Likes", "Like to View Ratio","Comments","Comment to View Ratio", "Duration in Minutes", "Days Since Published"]
@@ -36,6 +27,7 @@ app_ui = ui.page_fluid(
     ui.h2("Visualizing One Variable"),
     ui.input_selectize("hist", "Select a variable:", graph_inputs),
     ui.output_plot("histogram"),
+    ui.p("Note: If the axis shows 1e6 that means 1 million. If the axis shows 1e8 that means 100 million."),
 
 
     ui.h2("Visualizing the Relationship Between Two Variables"),
@@ -54,7 +46,10 @@ app_ui = ui.page_fluid(
     ui.input_selectize("video2", "Select a second video:", df['Title and Day Published'].iloc[::-1]),
     ui.output_table("data_table"),
 
-    ui.output_text("txt"),
+    ui.output_text("t_test_views"),
+    ui.p(""),
+    ui.output_text("t_test_comments"),
+    ui.p(""),
 
 
    
@@ -97,6 +92,7 @@ def server(input, output, session):
 
         v1_df = pd.DataFrame(df.iloc[int(v1)]).T
         v2_df = pd.DataFrame(df.iloc[int(v2)]).T
+        #diff_df = pd.DataFrame(df.iloc[int(v1)] - df.iloc[int(v2)]).T
 
         final_df = pd.concat([v1_df, v2_df], axis = 0)
 
@@ -106,12 +102,47 @@ def server(input, output, session):
 
     @output
     @render.text
-    def txt():
+    def t_test_views():
         v1 = input.video1()
-        #v2 = input.video2()
-        
+        v2 = input.video2()
         v1_df = pd.DataFrame(df.iloc[int(v1)]).T
-        return v1_df.iloc[0]['Like to View Ratio']
+        v2_df = pd.DataFrame(df.iloc[int(v2)]).T
+        final_df = pd.concat([v1_df, v2_df], axis = 0)
+        # only include the columns views, likes, and comments
+        final_df = final_df[['Title','Views', 'Likes', 'Comments', 'Like to View Ratio', 'Comment to View Ratio']]
+
+        z_top = final_df.iloc[0]['Like to View Ratio'] - final_df.iloc[1]['Like to View Ratio']
+        pi = (final_df.iloc[0]['Likes'] + final_df.iloc[1]['Likes']) / (final_df.iloc[0]['Views'] + final_df.iloc[1]['Views'])
+        z_bottom = np.sqrt(pi * (1 - pi) * (1/final_df.iloc[0]['Views'] + 1/final_df.iloc[1]['Views']))
+        z = z_top / z_bottom
+        p = 1 - stats.norm.cdf(z)
+
+        if p < .01:
+            return "The p-value is {}. There is a statistically significant difference between the like to view ratio of {} and {} at the alpha = .01 level.".format(round(p,3), final_df.iloc[0]['Title'], final_df.iloc[1]['Title'])   
+        else:
+            return "The p-value is {}. There is not enough evidence to declare that there is a statistically significant difference between the like to view ratio of {} and {}.".format(round(p,3), final_df.iloc[0]['Title'], final_df.iloc[1]['Title'])
+
+    @output
+    @render.text
+    def t_test_comments():
+        v1 = input.video1()
+        v2 = input.video2()
+        v1_df = pd.DataFrame(df.iloc[int(v1)]).T
+        v2_df = pd.DataFrame(df.iloc[int(v2)]).T
+        final_df = pd.concat([v1_df, v2_df], axis = 0)
+        # only include the columns views, likes, and comments
+        final_df = final_df[['Title','Views', 'Likes', 'Comments', 'Like to View Ratio', 'Comment to View Ratio']]
+
+        z_top = final_df.iloc[0]['Comment to View Ratio'] - final_df.iloc[1]['Comment to View Ratio']
+        pi = (final_df.iloc[0]['Comments'] + final_df.iloc[1]['Comments']) / (final_df.iloc[0]['Views'] + final_df.iloc[1]['Views'])
+        z_bottom = np.sqrt(pi * (1 - pi) * (1/final_df.iloc[0]['Views'] + 1/final_df.iloc[1]['Views']))
+        z = z_top / z_bottom
+        p = 1 - stats.norm.cdf(z)
+        if p < .01:
+            return "The p-value is {}. There is a statistically significant difference between the comment to view ratio of {} and {} at the alpha = .01 level.".format(round(p,3), final_df.iloc[0]['Title'], final_df.iloc[1]['Title'])   
+        else:
+            return "The p-value is {}. There is not enough evidence to declare that there is a statistically significant difference between the comment to view ratio of {} and {}.".format(round(p,3), final_df.iloc[0]['Title'], final_df.iloc[1]['Title'])
+
 
     @output
     @render.text
