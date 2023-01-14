@@ -1,20 +1,13 @@
 from shiny import App, ui, render
 from pathlib import Path
-import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import datetime
-import requests
 from scipy import stats
 
 # reading in df
-infile = Path(__file__).parent / "video_statistics.csv"
+infile = Path(__file__).parent / "data/video_statistics.csv"
 df = pd.read_csv(infile)
-
-
-from shiny import App, render, ui
 
 # graph inputs
 graph_inputs = ["Views", "Views per Day","Likes", "Like to View Ratio","Comments","Comment to View Ratio", "Duration in Minutes", "Days Since Published"]
@@ -87,6 +80,7 @@ def server(input, output, session):
         # x and y labels
         plt.xlabel(x)
         plt.ylabel(y)
+        
 
     @output
     @render.table
